@@ -1,0 +1,16 @@
+{
+  "profiles": {
+    "RaspberryPiLighting": {
+      "commandName": "Project",
+      "remoteDebugEnabled": false,
+      "remoteDebugMachine": "192.168.68.53:22",
+      "authenticationMode": "Windows"
+    },
+    "Profile 1": {
+      "commandName": "Project",
+      "remoteDebugEnabled": true,
+      "remoteDebugMachine": "192.168.68.53:22",
+      "authenticationMode": "Windows"
+    }
+  }
+}
