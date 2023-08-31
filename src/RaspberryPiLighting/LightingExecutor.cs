@@ -4,6 +4,12 @@ using Microsoft.Extensions.Options;
 using System.Device.Spi;
 using System.Drawing;
 
+/*
+ * pscp -pw d780K97e-19d C:/Users/khend/source/repos/RaspberryPiLighting/src/RaspberryPiLighting/bin/Debug/net7.0/publish/* khend@192.168.68.52:/home/khend/VSLinuxDbg/RaspberryPiLighting/
+ * 
+ * cd ~/VSLinuxDbg/RaspberryPiLighting && mv RaspberryPiLighting RaspberryPiLighting.exe && chmod 777 RaspberryPiLighting.exe && ./RaspberryPiLighting.exe
+ */
+
 namespace RaspberryPiLighting
 {
     internal partial class LightingExecutor
@@ -43,14 +49,17 @@ namespace RaspberryPiLighting
                 .ToArray();
 
             _currentFrame = Enumerable.Range(0, _options.NumberOfLEDs).Select(x=> Color.Black).ToArray();
+            var msPF = 1.0 / _options.TargetFps * 1000.0;
 
             try
             {
                 while (!ct2.IsCancellationRequested)
                 {
+                    var fpsTask = Task.Delay(TimeSpan.FromMilliseconds(msPF), ct2);
+
                     populateFrame();
                     displayFrame();
-                    await Task.Delay(TimeSpan.FromMilliseconds(_options.FrameDelayInMs), ct2);
+                    await fpsTask;
                 }
             }
             catch(TaskCanceledException) 
@@ -60,6 +69,10 @@ namespace RaspberryPiLighting
             catch(ThreadAbortException)
             {
                 //Expected
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
             }
             finally
             {
@@ -75,6 +88,15 @@ namespace RaspberryPiLighting
             if (_spi == null)
             {
                 Console.WriteLine("Creating spi");
+                // https://pinout.xyz/pinout/spi
+                // https://blog.stabel.family/raspberry-pi-4-multiple-spis-and-the-device-tree/
+                // Bus 0 = 19 (MOSI)      spi0-0cs
+                // Bus 1 = 38 (GPIO 20)   spi1-1cs
+                // Bus 2 = ?              spi2-1cs NOT FOUND
+                // Bus 3 = 03 (SCL1)      spi3-1cs
+                // Bus 4 = 31             spi4-1cs ERROR
+                // Bus 5 = 08 (TXD0)      spi5-1cs
+                // Bus 6 = 35             spi6-1cs NOT FOUND
                 var settings = new SpiConnectionSettings(0)
                 {
                     ClockFrequency = 2_400_000,

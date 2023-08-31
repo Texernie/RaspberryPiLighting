@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace RaspberryPiLighting
 {
@@ -29,13 +30,15 @@ namespace RaspberryPiLighting
                 Console.WriteLine("CANCEL received! Stopped!");
             };
 
+            var config = host.Services.GetRequiredService<IOptionsMonitor<LightingConfiguration>>();
             var ms = host.Services.GetRequiredService<LightingExecutor>();
-            await ms.ExecutePatternAsync();
-            //await ms.ExecuteFireAsync();
 
-            /*
-             * cd ~/VSLinuxDbg/RaspberryPiLighting && mv RaspberryPiLighting RaspberryPiLighting.exe && chmod 777 RaspberryPiLighting.exe && ./RaspberryPiLighting.exe
-             */
+            if (config.CurrentValue.DoFire)
+                await ms.ExecuteFireAsync();
+            else
+                await ms.ExecutePatternAsync();
+
+            Console.WriteLine("Exited");
         }
     }
 }
