@@ -14,17 +14,19 @@ namespace RaspberryPiLighting
 {
     internal partial class LightingExecutor
     {
-        private readonly LightingConfiguration _options;
+        private readonly IOptionsMonitor<LightingConfiguration> _optionsMonitor;
         private readonly IHostApplicationLifetime _hostApplicationLifetime;
+        private LightingConfiguration _options;
         private int _startingPatternIndex;
         private Color[] _repeatingPattern;
         private Color[] _currentFrame;
+        private Dictionary<int, int> _ledToPatternMap;
 
         private SpiDevice _spi;
 
         public LightingExecutor(IOptionsMonitor<LightingConfiguration> options, IHostApplicationLifetime hostApplicationLifetime)
         {
-            _options = options.CurrentValue;
+            _optionsMonitor = options;
             _hostApplicationLifetime = hostApplicationLifetime;
         }
 
@@ -35,11 +37,34 @@ namespace RaspberryPiLighting
 
         internal async Task ExecutePatternAsync()
         {
+            _options = _optionsMonitor.CurrentValue;
+
             Console.WriteLine("ExecutePatternAsync");
             var ct2 = _hostApplicationLifetime.ApplicationStopping;
 
             if (_options.PatternToRepeat == null)
+            {
+                Console.WriteLine("No pattern to repeat");
                 return;
+            }
+
+            if (_options.PatternToRepeat.Length == 0)
+            {
+                Console.WriteLine("Pattern to repeat was empty");
+                return;
+            }
+
+            if (_options.LedDefinitions == null)
+            {
+                Console.WriteLine("Led map was missing");
+                return;
+            }
+
+            if (_options.LedDefinitions.Length == 0)
+            {
+                Console.WriteLine("Led map was empty");
+                return;
+            }
 
             _startingPatternIndex = 0;
 
@@ -48,8 +73,13 @@ namespace RaspberryPiLighting
                 .Select(x => Color.FromArgb(x))
                 .ToArray();
 
+            populateLedMap();
+
             _currentFrame = Enumerable.Range(0, _options.NumberOfLEDs).Select(x=> Color.Black).ToArray();
             var msPF = 1.0 / _options.TargetFps * 1000.0;
+
+            var startTime = DateTime.UtcNow;
+            var loopCount = 0;
 
             try
             {
@@ -59,6 +89,19 @@ namespace RaspberryPiLighting
 
                     populateFrame();
                     displayFrame();
+                    loopCount++;
+
+                    if (loopCount == 1)
+                        Console.WriteLine($"Target FPS is {_options.TargetFps}"); 
+                    if (loopCount % 10 == 0)
+                    {
+                        var stopTime = DateTime.UtcNow;
+                        var ts = (stopTime - startTime).TotalSeconds;
+                        var actualFps = loopCount / ts;
+
+                        Console.Write($"\rActual FPS: {actualFps:F3}     ");
+                    }
+
                     await fpsTask;
                 }
             }
@@ -76,10 +119,46 @@ namespace RaspberryPiLighting
             }
             finally
             {
-                Console.WriteLine("Exiting Executor");
+                var stopTime = DateTime.UtcNow;
+                Console.WriteLine("Exiting Pattern Executor");
                 _currentFrame = Enumerable.Range(0, _options.NumberOfLEDs).Select(x => Color.Black).ToArray();
                 displayFrame();
-                Console.WriteLine("LEDs cleared.");
+                Console.WriteLine("LEDs cleared");
+                var ts = (stopTime - startTime).TotalSeconds;
+                var actualFps = loopCount / ts;
+                Console.WriteLine($"Actual FPS was {actualFps} vs target fps of {_options.TargetFps}.");
+            }
+        }
+
+        private void populateLedMap()
+        {
+            //Initialize all to "black"
+            _ledToPatternMap = Enumerable.Range(0, _options.NumberOfLEDs)
+                .ToDictionary(x => x, x => -1);
+
+            foreach(var lr in _options.LedDefinitions.OrderBy(x => x.Index))
+            {
+                if (lr.LedStart < lr.LedEnd)
+                {
+                    var currentLedIndex = lr.LedStart;
+                    var currentPatternIndex = 0;
+
+                    while (currentLedIndex <= lr.LedEnd)
+                    {
+                        _ledToPatternMap[currentLedIndex++] = currentPatternIndex++ % _repeatingPattern.Length;
+                    }
+                }
+                else
+                {
+                    var currentLedIndex = lr.LedStart;
+                    var currentPatternIndex = 0;
+
+                    while (currentLedIndex >= lr.LedEnd)
+                    {
+                        _ledToPatternMap[currentLedIndex--] = currentPatternIndex++ % _repeatingPattern.Length;
+                    }
+
+                }
             }
         }
 
@@ -101,7 +180,7 @@ namespace RaspberryPiLighting
                 {
                     ClockFrequency = 2_400_000,
                     Mode = SpiMode.Mode0,
-                    DataBitLength = 8
+                    DataBitLength = 8,
                 };
 
                 _spi = SpiDevice.Create(settings);
@@ -124,7 +203,7 @@ namespace RaspberryPiLighting
             for (int i = 0; i < _repeatingPattern.Length; i++)
             {
                 var c = _repeatingPattern[(i + _startingPatternIndex) % _repeatingPattern.Length];
-                foreach(var fi in _options.PatternToPixelMap[i]) 
+                foreach(var fi in _ledToPatternMap.Where(x=> x.Value == i).Select(x=>x.Key))
                     _currentFrame[fi] = c;
             }
 

@@ -18,13 +18,29 @@ namespace RaspberryPiLighting
             _heat = Enumerable.Range(0, _size).Select(x => (byte)0).ToArray();
             var msPF = 1.0 / _options.TargetFps * 1000;
 
+            var startTime = DateTime.UtcNow;
+            var loopCount = 0;
+
             try
             {
                 while (!ct2.IsCancellationRequested)
                 {
                     var fpsTask = Task.Delay(TimeSpan.FromMilliseconds(msPF), ct2);
+
                     populateFireFrame();
                     displayFrame();
+                    loopCount++;
+
+                    if (loopCount == 1)
+                        Console.WriteLine($"Target FPS is {_options.TargetFps}");
+                    if (loopCount % 10 == 0)
+                    {
+                        var stopTime = DateTime.UtcNow;
+                        var ts = (stopTime - startTime).TotalSeconds;
+                        var actualFps = loopCount / ts;
+                        Console.Write($"\rActual FPS: {actualFps:F3}     ");
+                    }
+
                     await fpsTask;
                 }
             }
@@ -42,10 +58,15 @@ namespace RaspberryPiLighting
             }
             finally
             {
-                Console.WriteLine("Exiting Executor");
+                var stopTime = DateTime.UtcNow;
+                Console.WriteLine("Exiting Fire Executor");
                 _currentFrame = Enumerable.Range(0, _options.NumberOfLEDs).Select(x => Color.Black).ToArray();
                 displayFrame();
                 Console.WriteLine("LEDs cleared.");
+                var ts = (stopTime - startTime).TotalSeconds;
+                var actualFps = loopCount / ts;
+                Console.WriteLine($"Actual FPS was {actualFps} vs target fps of {_options.TargetFps}.");
+
             }
         }
 

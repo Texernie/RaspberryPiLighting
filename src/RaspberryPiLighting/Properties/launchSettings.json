@@ -11,6 +11,10 @@
       "remoteDebugEnabled": true,
       "remoteDebugMachine": "192.168.68.53:22",
       "authenticationMode": "Windows"
+    },
+    "WSL": {
+      "commandName": "WSL2",
+      "distributionName": ""
     }
   }
 }
