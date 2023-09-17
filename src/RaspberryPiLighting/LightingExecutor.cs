@@ -5,7 +5,7 @@ using System.Device.Spi;
 using System.Drawing;
 
 /*
- * pscp -pw d780K97e-19d C:/Users/khend/source/repos/RaspberryPiLighting/src/RaspberryPiLighting/bin/Debug/net7.0/publish/* khend@192.168.68.52:/home/khend/VSLinuxDbg/RaspberryPiLighting/
+ * pscp -pw d780K97e-19d C:/Users/khend/source/repos/RaspberryPiLighting/src/RaspberryPiLighting/bin/Debug/net7.0/publish/* khend@rpi1.local:/home/khend/VSLinuxDbg/RaspberryPiLighting/
  * 
  * cd ~/VSLinuxDbg/RaspberryPiLighting && mv RaspberryPiLighting RaspberryPiLighting.exe && chmod 777 RaspberryPiLighting.exe && ./RaspberryPiLighting.exe
  */
@@ -187,7 +187,7 @@ namespace RaspberryPiLighting
 
                 Console.WriteLine("Created spi");
             }
-
+            
             var ledStrip = new Ws2812b(_spi, _options.NumberOfLEDs);
 
             var img = ledStrip.Image;

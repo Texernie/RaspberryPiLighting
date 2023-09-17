@@ -4,9 +4,16 @@ namespace RaspberryPiLighting
 {
     internal partial class LightingExecutor
     {
+        /*
+         * pscp -pw d780K97e-19d C:/Users/khend/source/repos/RaspberryPiLighting/src/RaspberryPiLighting/bin/Debug/net7.0/publish/* khend@rpi1.local:/home/khend/VSLinuxDbg/RaspberryPiLighting/
+         * 
+         * cd ~/VSLinuxDbg/RaspberryPiLighting && mv RaspberryPiLighting RaspberryPiLighting.exe && chmod 777 RaspberryPiLighting.exe && ./RaspberryPiLighting.exe
+         */
+
         internal async Task ExecuteFireAsync()
         {
             Console.WriteLine("ExecuteFireAsync");
+            _options = _optionsMonitor.CurrentValue;
             var ct2 = _hostApplicationLifetime.ApplicationStopping;
 
             _currentFrame = Enumerable.Range(0, _options.NumberOfLEDs).Select(x => Color.Black).ToArray();
