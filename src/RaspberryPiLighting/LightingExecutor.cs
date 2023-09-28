@@ -4,12 +4,6 @@ using Microsoft.Extensions.Options;
 using System.Device.Spi;
 using System.Drawing;
 
-/*
- * pscp -pw d780K97e-19d C:/Users/khend/source/repos/RaspberryPiLighting/src/RaspberryPiLighting/bin/Debug/net7.0/publish/* khend@rpi1.local:/home/khend/VSLinuxDbg/RaspberryPiLighting/
- * 
- * cd ~/VSLinuxDbg/RaspberryPiLighting && mv RaspberryPiLighting RaspberryPiLighting.exe && chmod 777 RaspberryPiLighting.exe && ./RaspberryPiLighting.exe
- */
-
 namespace RaspberryPiLighting
 {
     internal partial class LightingExecutor

@@ -1,0 +1,55 @@
+﻿Initial Steps:
+
+1) Burn image of Raspberry Pi OS 64-bit onto SD.
+2) Connect HDMI/KB/Mouse
+3) Power up pi (it will reboot multiple times at first)
+4) Open PI configuration
+	a) Network at boot
+	b) turn on VNC
+	c) turn on SPI
+	d) set headless screen resolution
+5) open console
+	a) sudo apt-get autoremove
+	b) download and install updates
+	c) sudo chpasswd (ensure you know your password)
+		1) username:password
+	d) sudo reboot
+6) VNC in after booting (HDMI/KB/Mouse isn't required any more) Open command line
+	a) sudo apt-get purge blueman bluez-utils bluez bluetooth && sudo apt-get autoremove && sudo apt-get autoclean
+	b) mkdir -p /home/khend/VSLinuxDbg/RaspberryPiLighting
+	c) sudo nano /boot/config.txt
+		1) uncomment dtparam=spi=on
+		2) comment dtparam=audio=on
+		3) comment camera_auto_detect=1
+		4) under [pi4] add core_freq=250
+		5) under [pi4] add core_freq_min=250
+	c) sudo restart
+
+
+
+
+For each debug deploy:
+
+1) Publish from VS
+2) Execute from Desktop Powershell (rpi1.local is the pi name)
+	pscp -pw d780K97e-19d C:/Users/khend/source/repos/RaspberryPiLighting/src/RaspberryPiLighting/bin/Debug/net7.0/publish/* khend@cauldronPi1.local:/home/khend/VSLinuxDbg/RaspberryPiLighting/
+3) Execute from VncBash script inside of Pi
+	cd ~/VSLinuxDbg/RaspberryPiLighting && mv RaspberryPiLighting RaspberryPiLighting.exe && chmod 777 RaspberryPiLighting.exe && ./RaspberryPiLighting.exe
+
+
+When settings are ready for autostart, do these steps:
+
+1) VNC in after booting (HDMI/KB/Mouse isn't required any more) Open command line
+	a) sudo mkdir /bin/RaspberryPiLighting
+	b) sudo cp /home/khend/VSLinuxDbg/RaspberryPiLighting/*.* /bin/RaspberryPiLighting
+	c) sudo crontab -e
+	   add below line to file
+	   @reboot cd /bin/RaspberryPiLighting && /bin/RaspberryPiLighting/RaspberryPiLighting.exe
+	d) sudo reboot
+
+To stop the copy that started at boot:
+1) VNC in after booting (HDMI/KB/Mouse isn't required any more) Open command line
+	a) ps aux | grep -i "RaspberryPiLighting.exe"
+	b) look for like like (483 is the process id)
+		khend        483  9.1  0.8 271952304 34540 ?     Sl   18:19   0:16 /bin/RaspberryPiLighting/RaspberryPiLighting.exe
+	c) sudo kill -3 *PID*
