@@ -31,8 +31,8 @@
 For each debug deploy:
 
 1) Publish from VS
-2) Execute from Desktop Powershell (rpi1.local is the pi name)
-	pscp -pw d780K97e-19d C:/Users/khend/source/repos/RaspberryPiLighting/src/RaspberryPiLighting/bin/Debug/net7.0/publish/* khend@cauldronPi1.local:/home/khend/VSLinuxDbg/RaspberryPiLighting/
+2) Execute from Desktop Powershell (192.168.1.139 is the either the pi's name or ip address)
+	pscp -l khend -pw d780K97e-19d C:/Users/khend/source/repos/RaspberryPiLighting/src/RaspberryPiLighting/bin/Debug/net7.0/publish/* 192.168.1.139:/home/khend/VSLinuxDbg/RaspberryPiLighting/
 3) Execute from VncBash script inside of Pi
 	cd ~/VSLinuxDbg/RaspberryPiLighting && mv RaspberryPiLighting RaspberryPiLighting.exe && chmod 777 RaspberryPiLighting.exe && ./RaspberryPiLighting.exe
 
